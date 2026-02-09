@@ -1,24 +1,45 @@
-📊 Consignado Data Analytics: Python & Power BI Pipeline
+import pandas as pd
 
-📝 Sobre o Projeto
-Este repositório contém um projeto completo de Análise de Dados focado no setor de crédito consignado. O fluxo abrange desde a engenharia de dados inicial até a entrega de um dashboard executivo de alta fidelidade.
+df = pd.read_csv('esteira (1).csv', sep=';')
 
-O principal objetivo foi demonstrar como transformar dados brutos e "sujos" em insights acionáveis, mantendo o foco na segurança da informação (LGPD) através da anonimização completa de valores e nomes.
+df = df[['Proposta', 'ADE', 'ADE2','Data Pagamento',
+          'Data Retorno', 'Data Cancelamento',
+          'Banco','Vl Liquido-Destinario','Produto',
+          'Etapa', 'Status', 'Valor Contrato'
+          ]]
 
-🛠️ Tecnologias e Ferramentas
-Python & Pandas: Limpeza, normalização e transformação de dados monetários.
+df["Produto"] = df["Produto"].replace({'CARTAO BENEFICIO':'CARTAO'})
 
-Power BI: Modelagem de dados, medidas DAX e visualização.
+df_pago = df[df['Etapa'] == 'Pago']
+df_cancelado = df[df['Etapa'] == 'Reprovada']
+df_retencao = df[df['Status'] == 'RETENCAO CLIENTE']
+df_total_propostas = len(df['Proposta'].unique())
 
-Canva: Design de interface (UI) e background personalizado para otimização de layout.
+df["Valor Contrato"] = (
+    df["Valor Contrato"]
+    .astype(str)
+    .str.strip()
+    .str.replace(".", "", regex=False)
+)
 
-🧮 Processamento de Dados (ETL)
-Utilizei o Pandas para resolver o desafio de converter strings monetárias brasileiras (ex: "1.500,00") em formatos numéricos operacionais. O código foi estruturado de forma limpa (Clean Code) utilizando parênteses para facilitar a manutenção:
-
-"df["Valor Contrato"] = pd.to_numeric(
+df["Valor Contrato"] = pd.to_numeric(
     df["Valor Contrato"]
     .astype(str)
     .str.replace(".", "", regex=False)
-    .str.replace(",", ".", regex=False),
+    .str.replace(",", ".", regex=False), 
     errors='coerce'
-)"
+)
+
+df_total_pago = df_pago['Valor Contrato'].sum()
+df_total_cancelado = df_cancelado['Valor Contrato'].sum()
+df_total_retencao = df_retencao['Valor Contrato'].sum()
+
+
+df_total_pago = pd.DataFrame({"Total Pago": [df_total_pago]})
+df_total_cancelado = pd.DataFrame({"Total Cancelado": [df_total_cancelado]})
+df_total_retencao = pd.DataFrame({"Total Retencao": [df_total_retencao]})
+
+
+df.to_excel("analise_consolidada.xlsx", index=False)
+
+
